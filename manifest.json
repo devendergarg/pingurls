@@ -1,0 +1,22 @@
+{
+  "short_name": "Pinger",
+  "name": "URL Pinger",
+  "id": "./",
+  "description": "A basic PWA",
+  "lang": "en",
+  "orientation": "natural",
+  "display": "standalone",
+  "display_override": ["standalone", "browser"],
+  "dir": "auto",
+  "scope": "./",
+  "start_url": "./",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
