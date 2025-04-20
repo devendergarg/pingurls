@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>URL Pinger</title>
+    <!-- PWA Links -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#6b21a8">
+    <!-- End PWA Links -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles */
@@ -42,7 +44,7 @@
 
         @keyframes spin {
             0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            100% { transform translate(0, 0) rotate(360deg); } /* Added translate(0,0) for better rendering */
         }
 
         /* History Bar Styles */
@@ -524,18 +526,74 @@
          });
 
     </script>
+    <!-- PWA Service Worker Registration and Background Sync Setup -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+
+                    // --- Background Sync ---
+                    // Register a one-time sync event immediately after SW registration
+                    if ('SyncManager' in window) {
+                         registration.sync.register('sync-data')
+                            .then(() => {
+                                console.log('Background Sync registered: sync-data');
+                            })
+                            .catch((err) => {
+                                console.error('Background Sync registration failed:', err);
+                            });
+                    } else {
+                        console.warn('Background Sync is not supported in this browser.');
+                    }
+
+                    // --- Periodic Background Sync ---
+                    // Check for periodicSync permission and register
+                    if ('periodicSync' in registration) {
+                        navigator.permissions.query({
+                                name: 'periodic-background-sync'
+                            })
+                            .then(status => {
+                                if (status.state === 'granted') {
+                                    console.log('Periodic Background Sync permission granted.');
+                                    // Register the periodic sync
+                                    registration.periodicSync.register('content-sync', {
+                                            minInterval: 24 * 60 * 60 * 1000 // 24 hours
+                                        })
+                                        .then(() => {
+                                            console.log('Periodic Background Sync registered: content-sync');
+                                        })
+                                        .catch((err) => {
+                                            console.error('Periodic Background Sync registration failed:', err);
+                                        });
+                                } else if (status.state === 'prompt') {
+                                    console.log('Periodic Background Sync permission is prompt. User interaction might be needed.');
+                                    // You might want to prompt the user for permission here
+                                } else {
+                                    console.warn('Periodic Background Sync permission denied.');
+                                }
+                            })
+                            .catch((err) => {
+                                console.error('Error querying periodic-background-sync permission:', err);
+                            });
+                    } else {
+                        console.warn('Periodic Background Sync is not supported in this browser.');
+                    }
+
+                })
+                .catch(error => {
+                    console.error('Service Worker registration failed:', error);
+                });
+        } else {
+            console.warn('Service workers are not supported in this browser.');
+        }
+    </script>
 <!--
 Notes:
 1. History Data Persistence: The history points shown in the bar (last 60 checks / 60 minutes) are NOT stored in localStorage. They are collected and displayed only during the current session. Refreshing the page will reset the history bar for all URLs. Only the list of monitored URLs (and their IP if resolved) is persisted.
 2. Ping Method Limitations: The status check uses client-side 'no-cors' fetch. This method can indicate if a connection was established and a response initiated, but it cannot reliably detect HTTP error codes (like 404, 500) or access response content due to browser security restrictions (CORS). An 'ok' status means the fetch didn't throw a network error or timeout.
 3. IP Lookup: IP addresses are looked up client-side using a public DNS-over-HTTPS (DoH) service (Cloudflare). This might be slow or fail if the service is blocked or unavailable.
+4. Background Syncs: Periodic Background Sync requires user engagement and browser heuristics to fire. One-time Background Sync fires when connectivity is restored after a failed network request. These are handled by the Service Worker when the browser determines appropriate times. The client-side script *registers* the syncs but doesn't directly trigger the SW event.
 -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./service-worker.js')
-                .then(reg => console.log('Service worker registered.', reg))
-                .catch(err => console.error('Service worker registration failed:', err));
-        }
-    </script>
 </body>
 </html>
