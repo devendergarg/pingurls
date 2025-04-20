@@ -6,7 +6,13 @@
   "lang": "en",
   "orientation": "natural",
   "display": "standalone",
-  "display_override": ["standalone", "browser"],
+  "display_override": [
+    "standalone",
+    "browser",
+    "minimal-ui",
+    "fullscreen",
+    "window-controls-overlay"
+  ],
   "dir": "auto",
   "scope": "./",
   "start_url": "./",
